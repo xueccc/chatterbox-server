@@ -55,7 +55,49 @@ describe('Node Server Request Listener Function', function() {
     expect(parsedBody.results).to.be.an('array');
     expect(res._ended).to.equal(true);
   });
+  it('Should not overwrite previous post to /classes/messages', function() {
+    var stubMsg = {
+      username: 'Cat',
+      text: 'Do my purring!'
+    };
+    var req = new stubs.request('/classes/messages', 'POST', stubMsg);
+    var res = new stubs.response();
 
+    handler.requestHandler(req, res);
+
+    stubMsg = {
+      username: 'Waffle',
+      text: 'Doing my sniffing!'
+    };
+    req = new stubs.request('/classes/messages', 'POST', stubMsg);
+    res = new stubs.response();
+
+    handler.requestHandler(req, res);
+
+    req = new stubs.request('/classes/messages', 'GET');
+    res = new stubs.response();
+
+    handler.requestHandler(req, res);
+
+    expect(res._responseCode).to.equal(200);
+    var messages = JSON.parse(res._data).results;
+    expect(messages.length).to.equal(2);
+    expect(messages[1].username).to.equal('Waffle');
+    expect(messages[1].text).to.equal('Doing my sniffing!');
+
+
+    //delete Waffle's message
+    var deleteReq = new stubs.request('/classes/messages', 'DELETE', stubMsg);
+    var deleteRes = new stubs.response();
+    handler.requestHandler(deleteReq, deleteRes);
+
+    //delete cat's message
+    deleteReq = new stubs.request('/classes/messages', 'DELETE', stubMsg);
+    deleteRes = new stubs.response();
+    handler.requestHandler(deleteReq, deleteRes);
+
+  });
+ 
   it('Should accept posts to /classes/messages', function() {
     var stubMsg = {
       username: 'Jono',
@@ -74,6 +116,7 @@ describe('Node Server Request Listener Function', function() {
     // expect(res._data).to.equal(JSON.stringify('\n'));
     expect(res._ended).to.equal(true);
   });
+
 
   it('Should respond with messages that were previously posted', function() {
     var stubMsg = {
@@ -114,6 +157,28 @@ describe('Node Server Request Listener Function', function() {
       function() {
         expect(res._responseCode).to.equal(404);
       });
+  });
+
+  it('Should accept delete to /classes/messages', function() {
+    var stubMsg = {
+      username: 'Jono',
+      text: 'Do my bidding!'
+    };
+    var req = new stubs.request('/classes/messages', 'POST', stubMsg);
+    var res = new stubs.response();
+
+    handler.requestHandler(req, res);
+
+    var deleteReq = new stubs.request('/classes/messages', 'DELETE', stubMsg);
+    var deleteRes = new stubs.response();
+    handler.requestHandler(deleteReq, deleteRes);
+    // Expect 200 Created response status
+    expect(deleteRes._responseCode).to.equal(200);
+
+    // Testing for a newline isn't a valid test
+    // TODO: Replace with with a valid test
+    // expect(res._data).to.equal(JSON.stringify('\n'));
+    expect(res._ended).to.equal(true);
   });
 
 });

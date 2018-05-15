@@ -17,23 +17,27 @@ var defaultCorsHeaders = {
   'access-control-allow-headers': 'content-type, accept',
   'access-control-max-age': 10 // Seconds.
 };
-var data = {results: []};
+var data = {
+  results: []
+};
+const url = require('url');
+
 var exports = module.exports = {};
 exports.requestHandler = function(request, response) {
+
   var statusCode;
-  // See the note below about CORS headers.
   var headers = defaultCorsHeaders;
 
   headers['Content-Type'] = 'application/JSON';
   
-  if (request.url !== '/classes/messages') {
+  if (url.parse(request.url).pathname!== '/classes/messages') {
   
     statusCode = 404;
     response.writeHead(statusCode, headers);
     response.end('ERROR 404: path not valid');
   }
   
-  if (request.url === '/classes/messages') {
+  if (url.parse(request.url).pathname === '/classes/messages') {
     
     if (request.method === 'POST') {
       console.log('Serving request type ' + request.method + ' for url ' + request.url);
@@ -48,20 +52,33 @@ exports.requestHandler = function(request, response) {
         body = Buffer.concat(body).toString();
         // at this point, `body` has the entire request body stored in it as a string
         data.results.push(JSON.parse(body));
+        // console.log(data.results);
+        response.end(JSON.stringify('Post Received'));
       });
-      // data.results.push(request._postData);
-      
-      response.end(JSON.stringify('Post Received'));
-    } 
+    }
+ 
     if (request.method === 'GET') {
       
       console.log('Serving request type ' + request.method + ' for url ' + request.url);
       statusCode = 200;
       
       response.writeHead(statusCode, headers);
-      
+      console.log(data.results);
       response.end(JSON.stringify(data)); 
     }
+    
+    if (request.method === 'DELETE') {
+      
+      console.log('Serving request type ' + request.method + ' for url ' + request.url);
+      statusCode = 200;
+      data.results.pop();
+    
+      
+      response.writeHead(statusCode, headers);
+      
+      response.end('Last message deleted'); 
+    }
+   
   }
 };
 //
