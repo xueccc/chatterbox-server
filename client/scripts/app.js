@@ -3,7 +3,7 @@ var app = {
 
   //TODO: The current 'handleUsernameClick' function just toggles the class 'friend'
   //to all messages sent by the user
-  server: 'http://127.0.0.1:3000',
+  server: 'http://127.0.0.1:3000/classes/messages',
   username: 'anonymous',
   roomname: 'lobby',
   lastMessageId: 0,
@@ -61,24 +61,25 @@ var app = {
     $.ajax({
       url: app.server,
       type: 'GET',
-      data: { order: '-createdAt' },
+      // data: { order: '-createdAt' },
       success: function(data) {
         // Don't bother if we have nothing to work with
-        if (!data.results || !data.results.length) { return; }
-
+        app.messages = JSON.parse(data);
+        console.log(Array.isArray(JSON.parse(data)));
+        console.log('data.results: ', app.messages.length);
+        if (!app.messages || !app.messages.length) { return; }
         // Store messages for caching later
-        app.messages = data.results;
-
+        // app.messages = data.results;
         // Get the last message
-        var mostRecentMessage = data.results[data.results.length - 1];
+        var mostRecentMessage = app.messages[app.messages.length - 1];
 
         // Only bother updating the DOM if we have a new message
         if (mostRecentMessage.objectId !== app.lastMessageId) {
           // Update the UI with the fetched rooms
-          app.renderRoomList(data.results);
+          app.renderRoomList(app.messages);
 
           // Update the UI with the fetched messages
-          app.renderMessages(data.results, animate);
+          app.renderMessages(app.messages, animate);
 
           // Store the ID of the most recent message
           app.lastMessageId = mostRecentMessage.objectId;
